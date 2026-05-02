@@ -182,6 +182,9 @@ export const RAW = [
 export const HAFTA_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1VCmV6yr5t1LHE77Xp5-cYhWrQSkhW3A8nix310MvRQU/export?format=csv&gid=0";
 export const HAFTA_SHEET_XLSX_URL = "https://docs.google.com/spreadsheets/d/1VCmV6yr5t1LHE77Xp5-cYhWrQSkhW3A8nix310MvRQU/export?format=xlsx";
 const PANELLIST_ALIASES = {
+  Anand: "Anand Vardhan",
+  Hridayesh: "Hridayesh Joshi",
+  Madhu: "Madhu Trehan",
   Meghnad: "Meghnad S",
 };
 
