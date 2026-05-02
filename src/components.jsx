@@ -2,16 +2,7 @@ import { useEffect, useState } from "react";
 import { buildRoutes, typeLabel } from "./routes";
 import { HU } from "./utils";
 
-export function Avatar({ name, size = "md" }) {
-  const c = HU.avatarColor(name);
-  return (
-    <span className={`avatar ${size}`} style={{ background: c.bg, color: c.fg }} aria-label={name}>
-      {HU.initials(name)}
-    </span>
-  );
-}
-
-export function PanellistAvatar({ name, size = "md" }) {
+function usePanellistImage(name) {
   const [src, setSrc] = useState(null);
 
   useEffect(() => {
@@ -24,6 +15,20 @@ export function PanellistAvatar({ name, size = "md" }) {
     };
   }, [name]);
 
+  return src;
+}
+
+export function Avatar({ name, size = "md" }) {
+  const c = HU.avatarColor(name);
+  return (
+    <span className={`avatar ${size}`} style={{ background: c.bg, color: c.fg }} aria-label={name}>
+      {HU.initials(name)}
+    </span>
+  );
+}
+
+export function PanellistAvatar({ name, size = "md" }) {
+  const src = usePanellistImage(name);
   const c = HU.avatarColor(name);
 
   return (
@@ -34,6 +39,40 @@ export function PanellistAvatar({ name, size = "md" }) {
     >
       {!src && HU.initials(name)}
     </span>
+  );
+}
+
+export function PanellistCard({ panelist, query, onOpen }) {
+  const src = usePanellistImage(panelist.name);
+
+  return (
+    <article className={`panellist-card ${src ? "has-portrait" : ""}`}>
+      <button className="panellist-card-media" onClick={() => onOpen(panelist.name)} aria-label={`Open ${panelist.name}`}>
+        {src ? (
+          <span className="panellist-card-portrait" style={{ backgroundImage: `url("${src}")` }} aria-hidden="true" />
+        ) : (
+          <PanellistAvatar name={panelist.name} size="hero" />
+        )}
+        <span className="panellist-card-badge">{panelist.primaryType}</span>
+      </button>
+      <div className="panellist-card-body">
+        <div className="panellist-card-topline">
+          <span>{panelist.recommendationCount} recs</span>
+          <span>{panelist.episodeCount} episodes</span>
+        </div>
+        <button className="panellist-card-name" onClick={() => onOpen(panelist.name)}>
+          <HText text={panelist.name} q={query} />
+        </button>
+        <div className="panellist-card-role">{panelist.role}</div>
+        <p className={`panellist-card-bio ${panelist.bio ? "" : "placeholder"}`}>
+          {panelist.bio || "Guest contributor with a growing recommendation trail across Hafta episodes."}
+        </p>
+        <div className="panellist-card-meta">
+          <span>First seen {panelist.firstSeen}</span>
+          <span>Latest {panelist.latestSeen}</span>
+        </div>
+      </div>
+    </article>
   );
 }
 

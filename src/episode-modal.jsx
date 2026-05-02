@@ -108,9 +108,11 @@ export function PanellistModal({ name, allRecs, onClose, onEpisodeClick }) {
 
   return (
     <div className="backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal panellist-modal" onClick={(e) => e.stopPropagation()}>
         <header className="modal-head">
-          <PanellistAvatar name={name} size="xl" />
+          <div className="modal-portrait-wrap">
+            <PanellistAvatar name={name} size="hero" />
+          </div>
           <div className="modal-head-text">
             <h2 className="modal-name">{name}</h2>
             <div className="modal-role">{meta.role}</div>

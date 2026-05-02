@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Chips, RecCard, TypeStrip } from "./components";
+import { Chips, PanellistCard, RecCard, TypeStrip } from "./components";
 import { EpisodeBlock, PanellistModal } from "./episode-modal";
 import { HAFTA_DATA, RAW } from "./data";
+import { PANELLISTS } from "./panellists";
 import { HU } from "./utils";
 
 const PAGE_SIZE = 50;
@@ -146,7 +147,68 @@ export default function App() {
     return list;
   }, [sorted]);
 
-  const currentItems = view === "cards" ? sorted : grouped;
+  const panelistDirectory = useMemo(() => {
+    const lowerQ = q.trim().toLowerCase();
+    const entries = new Map();
+
+    allRecs.forEach((rec) => {
+      const existing = entries.get(rec.panellist) || {
+        name: rec.panellist,
+        role: PANELLISTS[rec.panellist]?.role || "Guest contributor",
+        bio: PANELLISTS[rec.panellist]?.bio || null,
+        recommendationCount: 0,
+        episodes: new Set(),
+        firstNumeric: null,
+        latestNumeric: null,
+        firstSpecial: null,
+        latestSpecial: null,
+        typeCounts: {},
+      };
+
+      existing.recommendationCount += 1;
+      existing.episodes.add(HU.episodeKey(rec.episode));
+      existing.typeCounts[rec.type] = (existing.typeCounts[rec.type] || 0) + 1;
+
+      if (typeof rec.episode === "number") {
+        existing.firstNumeric = existing.firstNumeric == null ? rec.episode : Math.min(existing.firstNumeric, rec.episode);
+        existing.latestNumeric = existing.latestNumeric == null ? rec.episode : Math.max(existing.latestNumeric, rec.episode);
+      } else {
+        existing.firstSpecial = existing.firstSpecial || rec.episode;
+        existing.latestSpecial = rec.episode;
+      }
+
+      entries.set(rec.panellist, existing);
+    });
+
+    return [...entries.values()]
+      .map((entry) => {
+        const primaryType = entry.typeCounts
+          ? Object.entries(entry.typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "article"
+          : "article";
+        return {
+          name: entry.name,
+          role: entry.role,
+          bio: entry.bio,
+          recommendationCount: entry.recommendationCount,
+          episodeCount: entry.episodes.size,
+          firstSeen: entry.firstNumeric != null ? HU.episodeLabel(entry.firstNumeric) : entry.firstSpecial || "—",
+          latestSeen: entry.latestNumeric != null ? HU.episodeLabel(entry.latestNumeric) : entry.latestSpecial || "—",
+          primaryType,
+        };
+      })
+      .filter((panelist) => {
+        if (panellistFilter && panelist.name !== panellistFilter) return false;
+        if (!lowerQ) return true;
+        const hay = `${panelist.name} ${panelist.role} ${panelist.bio || ""}`.toLowerCase();
+        return hay.includes(lowerQ);
+      })
+      .sort((a, b) => {
+        if (b.recommendationCount !== a.recommendationCount) return b.recommendationCount - a.recommendationCount;
+        return a.name.localeCompare(b.name);
+      });
+  }, [allRecs, q, panellistFilter]);
+
+  const currentItems = view === "cards" ? sorted : view === "episodes" ? grouped : panelistDirectory;
   const visibleItems = useMemo(
     () => currentItems.slice(0, visibleCount),
     [currentItems, visibleCount],
@@ -179,6 +241,14 @@ export default function App() {
     if (key === "panellist") setPanellistFilter("");
     if (key === "episode") setEpisodeFilter("");
     if (key === "type") setTypeFilter("");
+  };
+
+  const changeView = (nextView) => {
+    if (nextView === "panellists") {
+      setEpisodeFilter("");
+      setTypeFilter("");
+    }
+    setView(nextView);
   };
 
   const totalRecs = allRecs.length;
@@ -224,13 +294,15 @@ export default function App() {
             </div>
           </div>
           <div className="stats-strip">
-            <button className={`stat stat-button ${view === "cards" ? "active" : ""}`} onClick={() => setView("cards")}>
+            <button className={`stat stat-button ${view === "cards" ? "active" : ""}`} onClick={() => changeView("cards")}>
               <div className="num">{totalRecs}</div><div className="lab">Recs</div>
             </button>
-            <button className={`stat stat-button ${view === "episodes" ? "active" : ""}`} onClick={() => setView("episodes")}>
+            <button className={`stat stat-button ${view === "episodes" ? "active" : ""}`} onClick={() => changeView("episodes")}>
               <div className="num">{totalEpisodes}</div><div className="lab">Episodes</div>
             </button>
-            <div className="stat"><div className="num">{totalPanellists}</div><div className="lab">Panellists</div></div>
+            <button className={`stat stat-button ${view === "panellists" ? "active" : ""}`} onClick={() => changeView("panellists")}>
+              <div className="num">{totalPanellists}</div><div className="lab">Panellists</div>
+            </button>
           </div>
         </div>
       </header>
@@ -252,34 +324,39 @@ export default function App() {
               {allPanellists.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
-          <div className="cmd-select">
-            <select value={episodeFilter} onChange={(e) => setEpisodeFilter(e.target.value)}>
-              <option value="">All episodes</option>
-              {episodes.map((ep) => (
-                <option key={ep} value={ep}>{HU.episodeLabel(Number.isNaN(Number(ep)) ? ep : Number(ep))}</option>
-              ))}
-            </select>
-          </div>
-          <div className="cmd-select">
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="episode-desc">Latest episodes</option>
-              <option value="episode-asc">Oldest episodes</option>
-              <option value="panellist">By panellist</option>
-              <option value="type">By type</option>
-            </select>
-          </div>
+          {view !== "panellists" && (
+            <div className="cmd-select">
+              <select value={episodeFilter} onChange={(e) => setEpisodeFilter(e.target.value)}>
+                <option value="">All episodes</option>
+                {episodes.map((ep) => (
+                  <option key={ep} value={ep}>{HU.episodeLabel(Number.isNaN(Number(ep)) ? ep : Number(ep))}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {view !== "panellists" && (
+            <div className="cmd-select">
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="episode-desc">Latest episodes</option>
+                <option value="episode-asc">Oldest episodes</option>
+                <option value="panellist">By panellist</option>
+                <option value="type">By type</option>
+              </select>
+            </div>
+          )}
           <div className="view-toggle">
-            <button className={view === "cards" ? "active" : ""} onClick={() => setView("cards")}>Cards</button>
-            <button className={view === "episodes" ? "active" : ""} onClick={() => setView("episodes")}>Episodes</button>
+            <button className={view === "cards" ? "active" : ""} onClick={() => changeView("cards")}>Cards</button>
+            <button className={view === "episodes" ? "active" : ""} onClick={() => changeView("episodes")}>Episodes</button>
+            <button className={view === "panellists" ? "active" : ""} onClick={() => changeView("panellists")}>Panellists</button>
           </div>
         </div>
       </div>
 
-      <TypeStrip counts={typeCounts} active={typeFilter} onToggle={(t) => setTypeFilter(typeFilter === t ? "" : t)} />
+      {view !== "panellists" && <TypeStrip counts={typeCounts} active={typeFilter} onToggle={(t) => setTypeFilter(typeFilter === t ? "" : t)} />}
       <Chips filters={{ q, panellist: panellistFilter, episode: episodeFilter, type: typeFilter }} onClear={clear} />
 
       <main className="main">
-        {sorted.length === 0 ? (
+        {currentItems.length === 0 ? (
           <div className="empty"><div className="h">No matches</div><div className="sub">Try clearing a filter, or search for a different name</div></div>
         ) : view === "cards" ? (
           <div className="cards-grid">
@@ -299,6 +376,26 @@ export default function App() {
               );
             })}
           </div>
+        ) : view === "panellists" ? (
+          <section className="panellists-page">
+            <div className="panellists-page-head">
+              <div className="panellists-page-kicker">Directory</div>
+              <h2>Every recurring and guest voice, arranged as an editorial wall of contributors.</h2>
+              <p>
+                Open any profile for a larger portrait, a longer bio, and a full recommendation trail across Hafta episodes.
+              </p>
+            </div>
+            <div className="panellists-grid">
+              {visibleItems.map((panelist) => (
+                <PanellistCard
+                  key={panelist.name}
+                  panelist={panelist}
+                  query={q}
+                  onOpen={(name) => setModalName(name)}
+                />
+              ))}
+            </div>
+          </section>
         ) : (
           <div>
             {visibleItems.map((g) => (
@@ -312,10 +409,10 @@ export default function App() {
             ))}
           </div>
         )}
-        {sorted.length > 0 && (
+        {currentItems.length > 0 && (
           <div className="pagination-status" aria-live="polite">
             <span>
-              Showing {Math.min(visibleCount, currentItems.length)} of {currentItems.length} {view === "cards" ? "results" : "episodes"}
+              Showing {Math.min(visibleCount, currentItems.length)} of {currentItems.length} {view === "cards" ? "results" : view === "episodes" ? "episodes" : "panellists"}
             </span>
             {hasMore ? <div ref={loadMoreRef} className="pagination-sentinel">Loading more…</div> : <span>All loaded</span>}
           </div>
