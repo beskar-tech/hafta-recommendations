@@ -4,6 +4,8 @@ import { EpisodeBlock, PanellistModal } from "./episode-modal";
 import { HAFTA_DATA, RAW } from "./data";
 import { HU } from "./utils";
 
+const PAGE_SIZE = 50;
+
 export default function App() {
   const [allRecs, setAllRecs] = useState(() => HAFTA_DATA.materializeRaw(RAW));
   const [dataSource, setDataSource] = useState("loading");
@@ -15,6 +17,7 @@ export default function App() {
   const [sortBy, setSortBy] = useState("episode-desc");
   const [view, setView] = useState("cards");
   const [modalName, setModalName] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem("hafta:theme") || "light";
@@ -23,6 +26,7 @@ export default function App() {
     }
   });
   const searchRef = useRef(null);
+  const loadMoreRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -142,6 +146,34 @@ export default function App() {
     return list;
   }, [sorted]);
 
+  const currentItems = view === "cards" ? sorted : grouped;
+  const visibleItems = useMemo(
+    () => currentItems.slice(0, visibleCount),
+    [currentItems, visibleCount],
+  );
+  const hasMore = visibleCount < currentItems.length;
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [view, q, panellistFilter, episodeFilter, typeFilter, sortBy, allRecs]);
+
+  useEffect(() => {
+    if (!hasMore || !loadMoreRef.current) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting) {
+          setVisibleCount((count) => Math.min(count + PAGE_SIZE, currentItems.length));
+        }
+      },
+      { rootMargin: "400px 0px" },
+    );
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, currentItems.length]);
+
   const clear = (key) => {
     if (key === "q") setQ("");
     if (key === "panellist") setPanellistFilter("");
@@ -251,7 +283,7 @@ export default function App() {
           <div className="empty"><div className="h">No matches</div><div className="sub">Try clearing a filter, or search for a different name</div></div>
         ) : view === "cards" ? (
           <div className="cards-grid">
-            {sorted.map((r, i) => {
+            {visibleItems.map((r, i) => {
               const featured = i % 7 === 0 && i > 0;
               const full = i % 13 === 0 && i > 0;
               return (
@@ -269,7 +301,7 @@ export default function App() {
           </div>
         ) : (
           <div>
-            {grouped.map((g) => (
+            {visibleItems.map((g) => (
               <EpisodeBlock
                 key={HU.episodeKey(g.episode)}
                 episode={g.episode}
@@ -278,6 +310,14 @@ export default function App() {
                 onPanellistClick={(n) => setModalName(n)}
               />
             ))}
+          </div>
+        )}
+        {sorted.length > 0 && (
+          <div className="pagination-status" aria-live="polite">
+            <span>
+              Showing {Math.min(visibleCount, currentItems.length)} of {currentItems.length} {view === "cards" ? "results" : "episodes"}
+            </span>
+            {hasMore ? <div ref={loadMoreRef} className="pagination-sentinel">Loading more…</div> : <span>All loaded</span>}
           </div>
         )}
       </main>
