@@ -55,6 +55,7 @@ export default function App() {
   const [view, setView] = useState(initialState.view);
   const [modalName, setModalName] = useState(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [showFloatingBrand, setShowFloatingBrand] = useState(false);
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem("hafta:theme") || "light";
@@ -84,6 +85,16 @@ export default function App() {
       localStorage.setItem("hafta:theme", theme);
     } catch (_) {}
   }, [theme]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setShowFloatingBrand(window.scrollY > 180);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const onPopState = () => {
@@ -314,6 +325,17 @@ export default function App() {
     setView(nextView);
   };
 
+  const goHome = () => {
+    setView("cards");
+    setQ("");
+    setPanellistFilter("");
+    setEpisodeFilter("");
+    setTypeFilter("");
+    setSortBy("episode-desc");
+    setModalName(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const openEpisodeFilter = (episode) => {
     setView("episodes");
     setEpisodeFilter(HU.episodeKey(episode));
@@ -347,9 +369,14 @@ export default function App() {
               <span className="dot"></span>
               Newslaundry · Hafta · Recommendations · <span style={{ color: "var(--ink)" }}>Editorial Index</span>
             </div>
-            <h1 className="wordmark">
-              Hafta<span className="slash"> / </span><span className="accent">Recommendations</span>
-            </h1>
+            <div className="wordmark-row">
+              <h1 className="wordmark">
+                Hafta<span className="slash"> / </span><span className="accent">Recommendations</span>
+              </h1>
+              <button className="masthead-brand" onClick={goHome} aria-label="Go to homepage" title="Go to homepage">
+                <img src="/nl-person.png" alt="" />
+              </button>
+            </div>
             <p className="lede">
               <em style={{ fontFamily: "var(--font-serif)", color: "var(--red)", fontWeight: 600 }}>The Editorial Index.</em>{" "}
               Hairline-bordered cards and grouped episode blocks. Books route to <span className="key">Goodreads</span>, films to{" "}
@@ -377,6 +404,14 @@ export default function App() {
       </header>
 
       <div className="cmd-bar">
+        <button
+          className={`floating-brand ${showFloatingBrand ? "visible" : ""}`}
+          onClick={goHome}
+          aria-label="Go to homepage"
+          title="Go to homepage"
+        >
+          <img src="/nl-person.png" alt="" />
+        </button>
         <div className="cmd-inner">
           <div className="cmd-search">
             <span className="icon" aria-hidden="true">

@@ -79,6 +79,67 @@ button { font-family: inherit; cursor: pointer; }
 .theme-toggle:hover { border-color: var(--red); color: var(--red); }
 .theme-toggle svg { display: block; }
 
+.floating-brand,
+.masthead-brand {
+  appearance: none;
+  overflow: hidden;
+  border-radius: 999px;
+  transition: border-color 140ms ease, transform 140ms ease, opacity 160ms ease;
+}
+
+.floating-brand {
+  position: absolute;
+  top: 12px;
+  left: 75px;
+  z-index: 24;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--hair-strong);
+  background: linear-gradient(180deg, var(--cream), var(--paper));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-8px);
+}
+
+.floating-brand.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.floating-brand img,
+.masthead-brand img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.floating-brand:hover,
+.masthead-brand:hover,
+.floating-brand:focus-visible,
+.masthead-brand:focus-visible {
+  border-color: var(--red);
+  outline: none;
+}
+
+.masthead-brand {
+  flex: 0 0 auto;
+  width: 78px;
+  height: 78px;
+  padding: 0;
+  border: 1px solid var(--hair-strong);
+  background: linear-gradient(180deg, var(--cream), var(--paper));
+  margin: 0;
+}
+
+.masthead-brand:hover,
+.masthead-brand:focus-visible {
+  transform: translateY(-1px);
+}
+
 /* MASTHEAD */
 .masthead { border-bottom: 1px solid var(--hair-strong); background: var(--paper); }
 .masthead-inner {
@@ -94,10 +155,16 @@ button { font-family: inherit; cursor: pointer; }
   display: flex; align-items: center; gap: 10px;
 }
 .pretitle .dot { width: 5px; height: 5px; background: var(--red); border-radius: 50%; display: inline-block; }
+.wordmark-row {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-bottom: 16px;
+}
 .wordmark {
   font-family: var(--font-serif); font-weight: 700;
   font-size: 64px; line-height: 0.95; letter-spacing: -0.025em;
-  margin: 0 0 16px; color: var(--ink);
+  margin: 0; color: var(--ink);
 }
 .wordmark .slash { color: var(--red); font-style: italic; font-weight: 400; padding: 0 4px; }
 .wordmark .accent { color: var(--red); font-style: italic; font-weight: 600; }
@@ -685,6 +752,7 @@ mark.hit { background: transparent; color: var(--red); font-weight: 600; border-
   .masthead-inner { grid-template-columns: 1fr; gap: 24px; }
   .stats-strip { max-width: 480px; }
   .wordmark { font-size: 52px; }
+  .wordmark-row { gap: 18px; }
   .card { grid-column: span 6; }
   .card.feature { grid-column: span 12; }
   .panellist-card { grid-column: span 6; }
@@ -693,7 +761,21 @@ mark.hit { background: transparent; color: var(--red); font-weight: 600; border-
 @media (max-width: 720px) {
   .masthead-inner { padding: 22px 20px; }
   .wordmark { font-size: 40px; }
+  .wordmark-row {
+    align-items: flex-start;
+    gap: 14px;
+  }
   .cmd-inner, .type-strip-inner, .chips, .main, .footer { padding-left: 20px; padding-right: 20px; }
+  .floating-brand {
+    top: 12px;
+    width: 42px;
+    height: 42px;
+    left: 20px;
+  }
+  .masthead-brand {
+    width: 60px;
+    height: 60px;
+  }
   .card, .card.feature, .card.feature.full { grid-column: span 12; }
   .panellists-page-head { padding: 22px 20px; }
   .panellists-page-head h2 { font-size: 28px; }
