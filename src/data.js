@@ -249,7 +249,7 @@ function cleanText(value) {
 function normalizeEpisode(value) {
   const cleaned = cleanText(value);
   if (!cleaned) return null;
-  if (/^\d+$/.test(cleaned)) return Number(cleaned);
+  if (/^\d+(?:\.0+)?$/.test(cleaned)) return Number.parseInt(cleaned, 10);
   return cleaned
     .replace(/^Hafta\s+/i, "")
     .replace(/\s*Ep:\s*/i, " ")
