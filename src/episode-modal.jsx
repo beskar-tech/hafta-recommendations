@@ -124,7 +124,10 @@ export function PanellistModal({ name, allRecs, onClose, onEpisodeClick }) {
               </p>
             )}
           </div>
-          <button className="btn-close" onClick={onClose} aria-label="Close">×</button>
+          <button className="btn-close" onClick={onClose} aria-label="Close">
+            <span className="btn-close-symbol" aria-hidden="true">×</span>
+            <span className="btn-close-label">Close</span>
+          </button>
         </header>
         <div className="modal-stats">
           <div className="stat"><div className="num">{myRecs.length}</div><div className="lab">Recommendations</div></div>

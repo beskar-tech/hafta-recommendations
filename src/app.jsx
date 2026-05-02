@@ -56,6 +56,7 @@ export default function App() {
   const [modalName, setModalName] = useState(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showFloatingBrand, setShowFloatingBrand] = useState(false);
+  const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem("hafta:theme") || "light";
@@ -131,14 +132,29 @@ export default function App() {
     const onKey = (e) => {
       if (e.key === "/" && document.activeElement !== searchRef.current) {
         e.preventDefault();
+        if (window.innerWidth <= 720) {
+          setMobileControlsOpen(true);
+        }
         searchRef.current?.focus();
       } else if (e.key === "Escape" && !modalName) {
-        if (document.activeElement === searchRef.current) searchRef.current.blur();
+        if (mobileControlsOpen) {
+          setMobileControlsOpen(false);
+        } else if (document.activeElement === searchRef.current) {
+          searchRef.current.blur();
+        }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [modalName]);
+  }, [modalName, mobileControlsOpen]);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth > 720) setMobileControlsOpen(false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const filtered = useMemo(() => {
     const qn = q.trim().toLowerCase();
@@ -345,6 +361,7 @@ export default function App() {
   const totalRecs = allRecs.length;
   const totalEpisodes = episodes.length;
   const totalPanellists = allPanellists.length;
+  const activeFilterCount = [q, panellistFilter, episodeFilter, typeFilter].filter(Boolean).length;
 
   return (
     <div data-screen-label="Hafta Recommendations">
@@ -405,7 +422,7 @@ export default function App() {
 
       <div className="cmd-bar">
         <button
-          className={`floating-brand ${showFloatingBrand ? "visible" : ""}`}
+          className={`floating-brand floating-brand-desktop ${showFloatingBrand ? "visible" : ""}`}
           onClick={goHome}
           aria-label="Go to homepage"
           title="Go to homepage"
@@ -413,51 +430,155 @@ export default function App() {
           <img src="/nl-person.png" alt="" />
         </button>
         <div className="cmd-inner">
-          <div className="cmd-search">
-            <span className="icon" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
-              </svg>
-            </span>
-            <input ref={searchRef} placeholder="Search titles or panellists…" value={q} onChange={(e) => setQ(e.target.value)} />
-            {!q && <span className="kbd">/</span>}
+          <div className="cmd-mobile-brand-slot">
+            <button
+              className={`floating-brand floating-brand-mobile ${showFloatingBrand ? "visible" : ""}`}
+              onClick={goHome}
+              aria-label="Go to homepage"
+              title="Go to homepage"
+            >
+              <img src="/nl-person.png" alt="" />
+            </button>
           </div>
-          <div className="cmd-select">
-            <select value={panellistFilter} onChange={(e) => setPanellistFilter(e.target.value)}>
-              <option value="">All panellists</option>
-              {allPanellists.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-          {view !== "panellists" && (
+          <div className="cmd-controls-desktop">
+            <div className="cmd-search">
+              <span className="icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+                </svg>
+              </span>
+              <input ref={searchRef} placeholder="Search titles or panellists…" value={q} onChange={(e) => setQ(e.target.value)} />
+              {!q && <span className="kbd">/</span>}
+            </div>
             <div className="cmd-select">
-              <select value={episodeFilter} onChange={(e) => setEpisodeFilter(e.target.value)}>
-                <option value="">All episodes</option>
-                {episodes.map((ep) => (
-                  <option key={ep} value={ep}>{HU.episodeLabel(Number.isNaN(Number(ep)) ? ep : Number(ep))}</option>
-                ))}
+              <select value={panellistFilter} onChange={(e) => setPanellistFilter(e.target.value)}>
+                <option value="">All panellists</option>
+                {allPanellists.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
-          )}
-          {view !== "panellists" && (
-            <div className="cmd-select">
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                <option value="episode-desc">Latest episodes</option>
-                <option value="episode-asc">Oldest episodes</option>
-                <option value="panellist">By panellist</option>
-                <option value="type">By type</option>
-              </select>
-            </div>
-          )}
+            {view !== "panellists" && (
+              <div className="cmd-select">
+                <select value={episodeFilter} onChange={(e) => setEpisodeFilter(e.target.value)}>
+                  <option value="">All episodes</option>
+                  {episodes.map((ep) => (
+                    <option key={ep} value={ep}>{HU.episodeLabel(Number.isNaN(Number(ep)) ? ep : Number(ep))}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {view !== "panellists" && (
+              <div className="cmd-select">
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                  <option value="episode-desc">Latest episodes</option>
+                  <option value="episode-asc">Oldest episodes</option>
+                  <option value="panellist">By panellist</option>
+                  <option value="type">By type</option>
+                </select>
+              </div>
+            )}
+          </div>
           <div className="view-toggle">
             <button className={view === "cards" ? "active" : ""} onClick={() => changeView("cards")}>Cards</button>
             <button className={view === "episodes" ? "active" : ""} onClick={() => changeView("episodes")}>Episodes</button>
             <button className={view === "panellists" ? "active" : ""} onClick={() => changeView("panellists")}>Panellists</button>
           </div>
+          <button
+            className={`cmd-menu-toggle ${mobileControlsOpen ? "active" : ""}`}
+            onClick={() => setMobileControlsOpen((open) => !open)}
+            aria-expanded={mobileControlsOpen}
+            aria-label="Open search and filters"
+          >
+            <span className="cmd-menu-lines" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+            <span className="cmd-menu-copy">Browse</span>
+            {activeFilterCount > 0 && <span className="cmd-menu-badge">{activeFilterCount}</span>}
+          </button>
+        </div>
+        <div className={`mobile-controls-panel ${mobileControlsOpen ? "open" : ""}`}>
+          <div className="mobile-controls-inner">
+            <div className="mobile-controls-block">
+              <div className="mobile-controls-label">Search</div>
+              <div className="cmd-search">
+                <span className="icon" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+                  </svg>
+                </span>
+                <input placeholder="Search titles or panellists…" value={q} onChange={(e) => setQ(e.target.value)} />
+              </div>
+            </div>
+            <div className="mobile-controls-block">
+              <div className="mobile-controls-label">Theme</div>
+              <button
+                className="mobile-theme-toggle"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" /></svg>
+                )}
+                <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
+              </button>
+            </div>
+            <div className="mobile-controls-grid">
+              <div className="mobile-controls-block">
+                <div className="mobile-controls-label">Panellist</div>
+                <div className="cmd-select">
+                  <select value={panellistFilter} onChange={(e) => setPanellistFilter(e.target.value)}>
+                    <option value="">All panellists</option>
+                    {allPanellists.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+              </div>
+              {view !== "panellists" && (
+                <div className="mobile-controls-block">
+                  <div className="mobile-controls-label">Episode</div>
+                  <div className="cmd-select">
+                    <select value={episodeFilter} onChange={(e) => setEpisodeFilter(e.target.value)}>
+                      <option value="">All episodes</option>
+                      {episodes.map((ep) => (
+                        <option key={ep} value={ep}>{HU.episodeLabel(Number.isNaN(Number(ep)) ? ep : Number(ep))}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+              {view !== "panellists" && (
+                <div className="mobile-controls-block">
+                  <div className="mobile-controls-label">Sort</div>
+                  <div className="cmd-select">
+                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                      <option value="episode-desc">Latest episodes</option>
+                      <option value="episode-asc">Oldest episodes</option>
+                      <option value="panellist">By panellist</option>
+                      <option value="type">By type</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+            {view !== "panellists" && (
+              <div className="mobile-controls-block mobile-type-strip">
+                <div className="mobile-controls-label">Format</div>
+                <TypeStrip counts={typeCounts} active={typeFilter} onToggle={(t) => setTypeFilter(typeFilter === t ? "" : t)} />
+              </div>
+            )}
+            <div className="mobile-controls-block mobile-active-filters">
+              <Chips filters={{ q, panellist: panellistFilter, episode: episodeFilter, type: typeFilter }} onClear={clear} />
+            </div>
+          </div>
         </div>
       </div>
 
-      {view !== "panellists" && <TypeStrip counts={typeCounts} active={typeFilter} onToggle={(t) => setTypeFilter(typeFilter === t ? "" : t)} />}
-      <Chips filters={{ q, panellist: panellistFilter, episode: episodeFilter, type: typeFilter }} onClear={clear} />
+      <div className="desktop-filter-strip">
+        {view !== "panellists" && <TypeStrip counts={typeCounts} active={typeFilter} onToggle={(t) => setTypeFilter(typeFilter === t ? "" : t)} />}
+        <Chips filters={{ q, panellist: panellistFilter, episode: episodeFilter, type: typeFilter }} onClear={clear} />
+      </div>
 
       <main className="main">
         {currentItems.length === 0 ? (
