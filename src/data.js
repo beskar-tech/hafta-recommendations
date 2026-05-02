@@ -181,9 +181,17 @@ export const RAW = [
 
 export const HAFTA_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1VCmV6yr5t1LHE77Xp5-cYhWrQSkhW3A8nix310MvRQU/export?format=csv&gid=0";
 export const HAFTA_SHEET_XLSX_URL = "https://docs.google.com/spreadsheets/d/1VCmV6yr5t1LHE77Xp5-cYhWrQSkhW3A8nix310MvRQU/export?format=xlsx";
+const PANELLIST_ALIASES = {
+  Meghnad: "Meghnad S",
+};
 
 function cleanText(value) {
   return (value || "").toString().replace(/\s+/g, " ").trim();
+}
+
+function normalizePanellistName(value) {
+  const cleaned = cleanText(value);
+  return PANELLIST_ALIASES[cleaned] || cleaned;
 }
 
   function normalizeTitleKey(value) {
@@ -355,7 +363,7 @@ function normalizeEpisode(value) {
   function materializeRaw(raw) {
     return raw.map(([episode, panellist, title, type, siteHint]) => ({
       episode,
-      panellist: cleanText(panellist),
+      panellist: normalizePanellistName(panellist),
       title: cleanText(title),
       type: type || "article",
       siteHint: siteHint || null,
@@ -469,7 +477,7 @@ function normalizeEpisode(value) {
       const episodeValue = normalizeEpisode(getCellValue(cells[`A${rowNumber}`], sharedStrings));
       if (episodeValue !== null) currentEpisode = episodeValue;
 
-      const panellist = cleanText(getCellValue(cells[`${colRef(panellistIndex)}${rowNumber}`], sharedStrings));
+      const panellist = normalizePanellistName(getCellValue(cells[`${colRef(panellistIndex)}${rowNumber}`], sharedStrings));
       if (!currentEpisode || !panellist) return;
 
       recommendationIndexes.forEach((index) => {
@@ -541,7 +549,7 @@ function normalizeEpisode(value) {
         const rawEpisode = normalizeEpisode(row[0]);
         if (rawEpisode !== null) currentEpisode = rawEpisode;
 
-        const panellist = cleanText(row[panellistIndex]);
+        const panellist = normalizePanellistName(row[panellistIndex]);
         if (!currentEpisode || !panellist) continue;
 
         recommendationIndexes.forEach((index) => {

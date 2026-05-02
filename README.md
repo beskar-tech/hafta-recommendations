@@ -20,8 +20,9 @@ npm run preview
 
 - `index.html` is the Vite HTML entry.
 - `src/main.jsx` bootstraps React.
-- `src/App.jsx` contains the main screen and filtering logic.
+- `src/app.jsx` contains the main screen and filtering logic.
 - `src/data.js` loads the bundled snapshot and the live spreadsheet fallback.
+- `public/panellists/` stores local panelist portraits using `first-last.png`, `first-last.jpg`, `first-last.jpeg`, or `first-last.webp`.
 
 ## Notes
 

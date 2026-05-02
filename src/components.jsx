@@ -21,7 +21,7 @@ function usePanellistImage(name) {
 export function Avatar({ name, size = "md" }) {
   const c = HU.avatarColor(name);
   return (
-    <span className={`avatar ${size}`} style={{ background: c.bg, color: c.fg }} aria-label={name}>
+    <span className={`avatar ${size}`} style={{ backgroundColor: c.bg, color: c.fg }} aria-label={name}>
       {HU.initials(name)}
     </span>
   );
@@ -34,7 +34,7 @@ export function PanellistAvatar({ name, size = "md" }) {
   return (
     <span
       className={`avatar ${size} ${src ? "has-img" : ""}`}
-      style={{ background: c.bg, color: c.fg, backgroundImage: src ? `url("${src}")` : undefined }}
+      style={{ backgroundColor: c.bg, color: c.fg, backgroundImage: src ? `url("${src}")` : undefined }}
       aria-label={name}
     >
       {!src && HU.initials(name)}
@@ -53,7 +53,6 @@ export function PanellistCard({ panelist, query, onOpen }) {
         ) : (
           <PanellistAvatar name={panelist.name} size="hero" />
         )}
-        <span className="panellist-card-badge">{panelist.primaryType}</span>
       </button>
       <div className="panellist-card-body">
         <div className="panellist-card-topline">

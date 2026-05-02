@@ -6,17 +6,53 @@ import { PANELLISTS } from "./panellists";
 import { HU } from "./utils";
 
 const PAGE_SIZE = 50;
+const VIEW_PATHS = {
+  cards: "/",
+  episodes: "/episodes",
+  panellists: "/panelists",
+};
+
+function stateFromLocation(location) {
+  const pathname = location.pathname;
+  const params = new URLSearchParams(location.search);
+
+  let view = "cards";
+  if (pathname === "/episodes") view = "episodes";
+  if (pathname === "/panelists") view = "panellists";
+
+  return {
+    view,
+    q: params.get("q") || "",
+    panellistFilter: params.get("panellist") || "",
+    episodeFilter: params.get("episode") || "",
+    typeFilter: params.get("type") || "",
+    sortBy: params.get("sort") || "episode-desc",
+  };
+}
+
+function buildLocationForState({ view, q, panellistFilter, episodeFilter, typeFilter, sortBy }) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  if (panellistFilter) params.set("panellist", panellistFilter);
+  if (episodeFilter) params.set("episode", episodeFilter);
+  if (typeFilter) params.set("type", typeFilter);
+  if (sortBy && sortBy !== "episode-desc") params.set("sort", sortBy);
+
+  const search = params.toString();
+  return `${VIEW_PATHS[view] || "/"}${search ? `?${search}` : ""}`;
+}
 
 export default function App() {
+  const initialState = stateFromLocation(window.location);
   const [allRecs, setAllRecs] = useState(() => HAFTA_DATA.materializeRaw(RAW));
   const [dataSource, setDataSource] = useState("loading");
   const [dataError, setDataError] = useState("");
-  const [q, setQ] = useState("");
-  const [panellistFilter, setPanellistFilter] = useState("");
-  const [episodeFilter, setEpisodeFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [sortBy, setSortBy] = useState("episode-desc");
-  const [view, setView] = useState("cards");
+  const [q, setQ] = useState(initialState.q);
+  const [panellistFilter, setPanellistFilter] = useState(initialState.panellistFilter);
+  const [episodeFilter, setEpisodeFilter] = useState(initialState.episodeFilter);
+  const [typeFilter, setTypeFilter] = useState(initialState.typeFilter);
+  const [sortBy, setSortBy] = useState(initialState.sortBy);
+  const [view, setView] = useState(initialState.view);
   const [modalName, setModalName] = useState(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [theme, setTheme] = useState(() => {
@@ -48,6 +84,37 @@ export default function App() {
       localStorage.setItem("hafta:theme", theme);
     } catch (_) {}
   }, [theme]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const nextState = stateFromLocation(window.location);
+      setView(nextState.view);
+      setQ(nextState.q);
+      setPanellistFilter(nextState.panellistFilter);
+      setEpisodeFilter(nextState.episodeFilter);
+      setTypeFilter(nextState.typeFilter);
+      setSortBy(nextState.sortBy);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  useEffect(() => {
+    const nextUrl = buildLocationForState({
+      view,
+      q,
+      panellistFilter,
+      episodeFilter,
+      typeFilter,
+      sortBy,
+    });
+
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+    if (currentUrl !== nextUrl) {
+      window.history.replaceState({}, "", nextUrl);
+    }
+  }, [view, q, panellistFilter, episodeFilter, typeFilter, sortBy]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -182,9 +249,6 @@ export default function App() {
 
     return [...entries.values()]
       .map((entry) => {
-        const primaryType = entry.typeCounts
-          ? Object.entries(entry.typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "article"
-          : "article";
         return {
           name: entry.name,
           role: entry.role,
@@ -193,7 +257,6 @@ export default function App() {
           episodeCount: entry.episodes.size,
           firstSeen: entry.firstNumeric != null ? HU.episodeLabel(entry.firstNumeric) : entry.firstSpecial || "—",
           latestSeen: entry.latestNumeric != null ? HU.episodeLabel(entry.latestNumeric) : entry.latestSpecial || "—",
-          primaryType,
         };
       })
       .filter((panelist) => {
@@ -249,6 +312,12 @@ export default function App() {
       setTypeFilter("");
     }
     setView(nextView);
+  };
+
+  const openEpisodeFilter = (episode) => {
+    setView("episodes");
+    setEpisodeFilter(HU.episodeKey(episode));
+    setModalName(null);
   };
 
   const totalRecs = allRecs.length;
@@ -371,7 +440,7 @@ export default function App() {
                   featured={featured && !full}
                   full={full}
                   onPanellistClick={(n) => setModalName(n)}
-                  onEpisodeClick={(ep) => setEpisodeFilter(HU.episodeKey(ep))}
+                  onEpisodeClick={openEpisodeFilter}
                 />
               );
             })}
@@ -428,10 +497,7 @@ export default function App() {
           name={modalName}
           allRecs={allRecs}
           onClose={() => setModalName(null)}
-          onEpisodeClick={(ep) => {
-            setEpisodeFilter(HU.episodeKey(ep));
-            setModalName(null);
-          }}
+          onEpisodeClick={openEpisodeFilter}
         />
       )}
     </div>

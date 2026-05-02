@@ -72,6 +72,7 @@ function highlight(text, query) {
 }
 
 const memCache = new Map();
+const PANELLIST_IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp"];
 
 function cacheGet(key) {
   if (memCache.has(key)) return memCache.get(key);
@@ -100,6 +101,44 @@ function cleanTitle(title, type) {
   t = t.replace(/\s+[—–-]\s+.+$/, "");
   if (type !== "tvseries") t = t.replace(/:\s+.+$/, "");
   return t.trim();
+}
+
+function panellistImageBaseName(name) {
+  return (name || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function loadImage(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(src);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+async function fetchLocalPanellistImage(name) {
+  const baseName = panellistImageBaseName(name);
+  if (!baseName) return null;
+
+  const key = `img:local-panellist:${baseName}`;
+  const cached = cacheGet(key);
+  if (cached && cached !== "") return cached;
+
+  for (const ext of PANELLIST_IMAGE_EXTENSIONS) {
+    const src = `/panellists/${baseName}.${ext}`;
+    const found = await loadImage(src);
+    if (found) {
+      cacheSet(key, found);
+      return found;
+    }
+  }
+
+  return null;
 }
 
 async function fetchWikiThumb(query) {
@@ -203,6 +242,8 @@ async function fetchThumbnailFor(title, type) {
 }
 
 async function fetchPersonImage(name) {
+  const local = await fetchLocalPanellistImage(name);
+  if (local) return local;
   return fetchWikiSearchThumb(name);
 }
 
