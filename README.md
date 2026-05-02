@@ -1,0 +1,29 @@
+# Hafta Recommendations
+
+This project is now a standard React + Vite app for browsing Hafta recommendations.
+
+## Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+npm run preview
+```
+
+## Structure
+
+- `index.html` is the Vite HTML entry.
+- `src/main.jsx` bootstraps React.
+- `src/App.jsx` contains the main screen and filtering logic.
+- `src/data.js` loads the bundled snapshot and the live spreadsheet fallback.
+
+## Notes
+
+- The app still tries to load the public Google Sheet first, then falls back to the bundled dataset.
+- Legacy extraction artifacts are still present in the repo, but the app now runs only from the Vite entry and `src/`.
