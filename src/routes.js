@@ -1,3 +1,5 @@
+import episodeUrlList from "../nl-hafta-urls.txt?raw";
+
 const enc = encodeURIComponent;
 
 const HOST_LABELS = {
@@ -22,6 +24,31 @@ const HOST_LABELS = {
   "youtu.be": "YouTube",
   "youtube.com": "YouTube",
 };
+
+function buildEpisodeUrlMap() {
+  const map = new Map();
+  const lines = episodeUrlList
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  lines.forEach((url) => {
+    const numericMatch = url.match(/\/hafta-(\d+)\b/i);
+    if (numericMatch) {
+      map.set(numericMatch[1], url);
+    }
+
+    const subscriberMatch = url.match(/\/nl-hafta-subscribers-take-ep-(\d+)\b/i);
+    if (subscriberMatch) {
+      const episodeNumber = subscriberMatch[1].padStart(2, "0");
+      map.set(`Subscriber's Take ${episodeNumber}`, url);
+    }
+  });
+
+  return map;
+}
+
+const EPISODE_URLS = buildEpisodeUrlMap();
 
 function hostLabel(url) {
   try {
@@ -132,6 +159,11 @@ export function buildRoutes(title, type, siteHint, sourceUrl, sourceLabel) {
 }
 
 export function newslaundryEpisodeUrl(episode) {
+  const key = typeof episode === "number" ? String(episode) : String(episode || "").trim();
+  if (EPISODE_URLS.has(key)) {
+    return EPISODE_URLS.get(key);
+  }
+
   if (typeof episode === "number") {
     return `https://www.newslaundry.com/search?q=hafta+${episode}`;
   }

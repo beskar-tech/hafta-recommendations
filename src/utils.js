@@ -1,3 +1,5 @@
+import { recommendationImageKey } from "./image-paths";
+
 // Shared utilities + image fetching
 function hash(str) {
   let h = 2166136261 >>> 0;
@@ -73,6 +75,7 @@ function highlight(text, query) {
 
 const memCache = new Map();
 const PANELLIST_IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp"];
+let recommendationManifestPromise = null;
 
 function cacheGet(key) {
   if (memCache.has(key)) return memCache.get(key);
@@ -214,7 +217,27 @@ async function fetchOpenLibraryCover(title) {
   }
 }
 
+async function loadRecommendationManifest() {
+  if (!recommendationManifestPromise) {
+    recommendationManifestPromise = fetch("/recommendations/manifest.json", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : {}))
+      .catch(() => ({}));
+  }
+  return recommendationManifestPromise;
+}
+
+async function fetchLocalRecommendationImage(title, type) {
+  const key = recommendationImageKey(title, type);
+  const manifest = await loadRecommendationManifest();
+  const fileName = manifest[key];
+  if (!fileName) return null;
+  return `/recommendations/images/${fileName}`;
+}
+
 async function fetchThumbnailFor(title, type) {
+  const local = await fetchLocalRecommendationImage(title, type);
+  if (local) return local;
+
   const cleaned = cleanTitle(title, type);
   if (!cleaned) return null;
 
@@ -242,9 +265,7 @@ async function fetchThumbnailFor(title, type) {
 }
 
 async function fetchPersonImage(name) {
-  const local = await fetchLocalPanellistImage(name);
-  if (local) return local;
-  return fetchWikiSearchThumb(name);
+  return fetchLocalPanellistImage(name);
 }
 
 export const HU = {
