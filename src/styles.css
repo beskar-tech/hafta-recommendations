@@ -785,7 +785,30 @@ mark.hit { background: transparent; color: var(--red); font-weight: 600; border-
   .episode-body { grid-template-columns: 1fr; }
   .ep-recs-cell { border-left: none; }
   .pagination-status { flex-direction: column; align-items: flex-start; }
-  .backdrop { padding: 16px; }
-  .panellist-modal .modal-head { grid-template-columns: 1fr; }
+  .backdrop {
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  .modal {
+    max-width: none;
+    max-height: none;
+    height: 100dvh;
+    border: none;
+    overflow-y: auto;
+  }
+  .modal-body {
+    overflow-y: visible;
+    flex: 0 0 auto;
+  }
+  .panellist-modal .modal-head {
+    grid-template-columns: 1fr;
+  }
   .modal-portrait-wrap { min-height: 260px; }
+  .btn-close {
+    position: sticky;
+    top: 16px;
+    justify-self: end;
+    z-index: 2;
+  }
 }
