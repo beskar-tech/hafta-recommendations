@@ -236,9 +236,9 @@ button { font-family: inherit; cursor: pointer; }
 /* COMMAND BAR */
 .cmd-bar { position: sticky; top: 0; z-index: 20; background: var(--paper); border-bottom: 1px solid var(--hair-strong); }
 .cmd-inner { max-width: 1320px; margin: 0 auto; padding: 12px 32px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.cmd-controls-desktop { display: flex; gap: 10px; align-items: center; flex: 1 1 auto; flex-wrap: wrap; }
+.cmd-controls-desktop { display: flex; gap: 10px; align-items: center; flex: 1 1 auto; flex-wrap: nowrap; min-width: 0; }
 .cmd-mobile-brand-slot { flex: 0 0 auto; }
-.cmd-search { position: relative; flex: 1 1 320px; min-width: 240px; }
+.cmd-search { position: relative; flex: 1 1 320px; min-width: 0; }
 .cmd-search input {
   width: 100%; border: 1px solid var(--hair-strong); background: var(--paper);
   font-family: var(--font-sans); font-size: 14px;
@@ -251,12 +251,13 @@ button { font-family: inherit; cursor: pointer; }
   font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft);
   border: 1px solid var(--hair); padding: 1px 6px; background: var(--cream); pointer-events: none;
 }
-.cmd-select { position: relative; }
+.cmd-select { position: relative; flex: 0 0 180px; }
 .cmd-select select {
   appearance: none; -webkit-appearance: none;
   font-family: var(--font-sans); font-size: 13px;
   border: 1px solid var(--hair-strong); background: var(--paper); color: var(--ink);
-  padding: 10px 30px 10px 14px; border-radius: 0; cursor: pointer; min-width: 140px;
+  width: 100%;
+  padding: 10px 30px 10px 14px; border-radius: 0; cursor: pointer; min-width: 0;
 }
 .cmd-select::after {
   content: "▾"; position: absolute; right: 10px; top: 50%;
