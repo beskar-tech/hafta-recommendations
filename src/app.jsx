@@ -395,6 +395,7 @@ export default function App() {
               </button>
             </div>
             <p className="lede">
+              <em style={{ fontFamily: "var(--font-serif)", color: "var(--red)", fontWeight: 600 }}>The Editorial Index.</em>{" "}
               The recommendations are captured here based on the data published by the good folks at Newslaundry. If anything is
               found inaccurate, please raise a PR at{" "}
               <a href="https://github.com/beskar-tech/hafta-recommendations" target="_blank" rel="noopener">
