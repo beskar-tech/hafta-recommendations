@@ -384,7 +384,7 @@ export default function App() {
           <div>
             <div className="pretitle">
               <span className="dot"></span>
-              Newslaundry · Hafta · Recommendations · <span style={{ color: "var(--ink)" }}>Editorial Index</span>
+              Newslaundry · Hafta · Recommendations
             </div>
             <div className="wordmark-row">
               <h1 className="wordmark">
@@ -395,10 +395,15 @@ export default function App() {
               </button>
             </div>
             <p className="lede">
-              <em style={{ fontFamily: "var(--font-serif)", color: "var(--red)", fontWeight: 600 }}>The Editorial Index.</em>{" "}
-              Hairline-bordered cards and grouped episode blocks. Books route to <span className="key">Goodreads</span>, films to{" "}
-              <span className="key">IMDb</span>, podcasts to <span className="key">Apple Podcasts</span>, articles to a publisher search.
-              Press <span className="key">/</span> to search, or click any panellist to read their full history.
+              The recommendations are captured here based on the data published by the good folks at Newslaundry. If anything is
+              found inaccurate, please raise a PR at{" "}
+              <a href="https://github.com/beskar-tech/hafta-recommendations" target="_blank" rel="noopener">
+                <em>Github</em>
+              </a>{" "}
+              or reach out to folks at{" "}
+              <a href="https://beskar.tech" target="_blank" rel="noopener">
+                <em>Beskar Technologies</em>
+              </a>.
             </p>
             <div className="source-note">
               {dataSource === "loading" && "Loading the live recommendations spreadsheet…"}
